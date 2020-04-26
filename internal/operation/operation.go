@@ -13,7 +13,10 @@ import (
 var file *os.File
 
 func formatMessage(i interface{}) string {
-	return fmt.Sprintf("| %s", i)
+	if i == nil {
+		return "|"
+	}
+	return fmt.Sprintf("| %-6s", i)
 }
 
 func Setup() error {
