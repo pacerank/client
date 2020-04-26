@@ -3,7 +3,6 @@ package system
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"io"
 	"os"
 )
@@ -14,24 +13,15 @@ type System interface {
 
 type Process struct {
 	Pid        int64
+	Ppid       int64
+	ModulePid  []int64
 	FileName   string
 	Checksum   string
 	Executable string
 }
 
-var (
-	ErrOperatingSystemNotSupported = errors.New("operating system is not supported")
-)
-
-func New(os string) (System, error) {
-	switch os {
-	case "windows":
-		return &windows{}, nil
-	case "linux":
-		return &linux{}, nil
-	default:
-		return nil, ErrOperatingSystemNotSupported
-	}
+func New() System {
+	return &target{}
 }
 
 // Create a checksum of given file

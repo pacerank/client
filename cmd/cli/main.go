@@ -4,7 +4,7 @@ import (
 	"github.com/pacerank/client/internal/operation"
 	"github.com/pacerank/client/pkg/system"
 	"github.com/rs/zerolog/log"
-	"runtime"
+	"time"
 )
 
 func main() {
@@ -22,15 +22,24 @@ func main() {
 		}
 	}()
 
-	sys, err := system.New(runtime.GOOS)
-	if err != nil {
-		log.Fatal().Str("os", runtime.GOOS).Err(err).Msg("could not create new system")
-	}
+	start := time.Now()
 
-	_, err = sys.Processes()
+	sys := system.New()
+
+	processes, err := sys.Processes()
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not get list of processes")
 	}
 
-	log.Info().Msg("application started")
+	log.Debug().Str("duration", time.Now().Sub(start).String()).Msg("duration for processing processes")
+
+	for _, process := range processes {
+		log.Debug().
+			Int64("pid", process.Pid).
+			Int64("ppid", process.Ppid).
+			Ints64("modules", process.ModulePid).
+			Str("executable", process.FileName).
+			Str("checksum", process.Checksum).
+			Msg("")
+	}
 }

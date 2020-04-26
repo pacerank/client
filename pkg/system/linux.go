@@ -1,3 +1,5 @@
+// +build linux
+
 package system
 
 import (
@@ -8,9 +10,9 @@ import (
 	"strings"
 )
 
-type linux struct{}
+type target struct{}
 
-func (l *linux) Processes() ([]Process, error) {
+func (t *target) Processes() ([]Process, error) {
 	var result = make([]Process, 0)
 
 	proc, err := os.Open("/proc")
@@ -51,7 +53,7 @@ func (l *linux) Processes() ([]Process, error) {
 
 		result = append(result, Process{
 			Pid:        pid,
-			FileName:   path[strings.LastIndex(path, "/"):],
+			FileName:   path[strings.LastIndex(path, "/")+1:],
 			Checksum:   cs,
 			Executable: path,
 		})

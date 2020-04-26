@@ -8,11 +8,11 @@ import (
 )
 
 func TestLinux_Processes(t *testing.T) {
-	if runtime.GOOS != "linux" {
-		t.Skipf("current operating system is not linux")
+	if runtime.GOOS != "target" {
+		t.Skipf("current operating system is not target")
 	}
 
-	sys, err := system.New("linux")
+	sys, err := system.New("target")
 	assert.NoError(t, err, "does not expect error when creating new system")
 
 	_, err = sys.Processes()
