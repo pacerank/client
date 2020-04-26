@@ -6,6 +6,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -42,7 +43,7 @@ func Setup() error {
 
 	stdoutWriter := zerolog.ConsoleWriter{
 		Out:           os.Stdout,
-		NoColor:       false,
+		NoColor:       runtime.GOOS != "linux",
 		TimeFormat:    "2006-01-02T15:04:05Z",
 		FormatMessage: formatMessage,
 	}
