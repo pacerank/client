@@ -9,15 +9,25 @@ import (
 
 type System interface {
 	Processes() ([]Process, error)
+	ActiveProcess() (*Process, error)
 }
 
 type Process struct {
-	Pid        int64
-	Ppid       int64
-	ModulePid  []int64
+	ProcessID  int64
+	Parent     int64
+	Children   []int64
+	Modules    []Module
 	FileName   string
 	Checksum   string
 	Executable string
+}
+
+type Module struct {
+	ProcessID  int64
+	ParentID   int64
+	Checksum   string
+	Executable string
+	FileName   string
 }
 
 func New() System {

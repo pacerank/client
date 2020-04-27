@@ -4,11 +4,26 @@ package system
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"syscall"
 	"unsafe"
 )
 
 type target struct{}
+
+type WindowsError struct {
+	Err     error
+	Message string
+}
+
+func (we WindowsError) Error() string {
+	return fmt.Sprintf("%s: %s", we.Message, we.Err.Error())
+}
+
+func (we WindowsError) Unwrap() error {
+	return we.Err
+}
 
 // Windows API functions
 var (
@@ -18,6 +33,10 @@ var (
 	procProcess32First           = modKernel32.NewProc("Process32FirstW")
 	procProcess32Next            = modKernel32.NewProc("Process32NextW")
 	procModule32First            = modKernel32.NewProc("Module32FirstW")
+	procModule32Next             = modKernel32.NewProc("Module32NextW")
+	modUser32                    = syscall.NewLazyDLL("User32.dll")
+	procForegroundWindow         = modUser32.NewProc("GetForegroundWindow")
+	procWindowThreadProcessId    = modUser32.NewProc("GetWindowThreadProcessId")
 )
 
 const (
@@ -64,7 +83,10 @@ func (t *target) Processes() ([]Process, error) {
 		return result, syscall.GetLastError()
 	}
 
-	defer procCloseHandle.Call(hProcessSnap)
+	// Close handler after method is ready
+	defer func() {
+		_, _, _ = procCloseHandle.Call(hProcessSnap)
+	}()
 
 	var process processEntry
 	process.Size = uint32(unsafe.Sizeof(process))
@@ -105,8 +127,8 @@ func (t *target) Processes() ([]Process, error) {
 
 		// Check if this process is a part of main process
 		for index, p := range result {
-			if p.Pid == int64(process.ParentProcessID) && p.FileName == fileName {
-				result[index].ModulePid = append(result[index].ModulePid, int64(process.ProcessID))
+			if p.Parent == int64(process.ParentProcessID) && p.FileName == fileName {
+				result[index].Children = append(result[index].Children, int64(process.ProcessID))
 				skip = true
 				break
 			}
@@ -120,7 +142,7 @@ func (t *target) Processes() ([]Process, error) {
 			continue
 		}
 
-		path, err := t.getProcessPath(process.ProcessID)
+		path, err := getProcessPath(int64(process.ProcessID))
 		if err != nil {
 			if ok, _, _ := procProcess32Next.Call(hProcessSnap, uintptr(unsafe.Pointer(&process))); ok == 0 {
 				break
@@ -139,8 +161,8 @@ func (t *target) Processes() ([]Process, error) {
 		}
 
 		result = append(result, Process{
-			Pid:        int64(process.ProcessID),
-			Ppid:       int64(process.ParentProcessID),
+			ProcessID:  int64(process.ProcessID),
+			Parent:     int64(process.ParentProcessID),
 			Checksum:   cs,
 			Executable: path,
 			FileName:   fileName,
@@ -154,11 +176,127 @@ func (t *target) Processes() ([]Process, error) {
 	return result, nil
 }
 
+func (t *target) ActiveProcess() (*Process, error) {
+	handle, _, _ := procForegroundWindow.Call()
+	if handle == 0 {
+		return nil, errors.New("no window is currently active")
+	}
+
+	var processID uint32
+
+	_, _, _ = procWindowThreadProcessId.Call(handle, uintptr(unsafe.Pointer(&processID)))
+	if processID == 0 {
+		return nil, errors.New("process id could not be found for window handle")
+	}
+
+	process, err := getProcess(processID)
+	if err != nil {
+		return nil, err
+	}
+
+	return process, nil
+}
+
+func getProcess(processID uint32) (result *Process, err error) {
+	// Create a process snap handler, with TH32CS_SNAPTHREAD (0x00000004)
+	hProcessSnap, _, _ := procCreateToolhelp32Snapshot.Call(0x00000002, uintptr(processID))
+	if hProcessSnap < 0 {
+		return nil, syscall.GetLastError()
+	}
+
+	// Close handler after method is ready
+	defer func() {
+		_, _, _ = procCloseHandle.Call(hProcessSnap)
+	}()
+
+	var process processEntry
+	process.Size = uint32(unsafe.Sizeof(process))
+
+	// Get the first process in the list
+	if ok, _, _ := procProcess32First.Call(hProcessSnap, uintptr(unsafe.Pointer(&process))); ok == 0 {
+		return nil, errors.New("could not retrieve process info")
+	}
+
+	var children []int64
+
+	for {
+		if process.ParentProcessID == processID {
+			children = append(children, int64(process.ProcessID))
+			if ok, _, _ := procProcess32Next.Call(hProcessSnap, uintptr(unsafe.Pointer(&process))); ok == 0 {
+				break
+			}
+
+			continue
+		}
+
+		if process.ProcessID == processID {
+			end := 0
+			for {
+				if process.ExeFile[end] == 0 {
+					break
+				}
+
+				end++
+			}
+
+			fileName := syscall.UTF16ToString(process.ExeFile[:end])
+
+			path, err := getProcessPath(int64(process.ProcessID))
+			if err != nil {
+				if ok, _, _ := procProcess32Next.Call(hProcessSnap, uintptr(unsafe.Pointer(&process))); ok == 0 {
+					break
+				}
+
+				continue
+			}
+
+			cs, err := checksum(path)
+			if err != nil {
+				if ok, _, _ := procProcess32Next.Call(hProcessSnap, uintptr(unsafe.Pointer(&process))); ok == 0 {
+					break
+				}
+
+				continue
+			}
+
+			result = &Process{
+				ProcessID:  int64(process.ProcessID),
+				Parent:     int64(process.ParentProcessID),
+				Children:   nil,
+				Modules:    nil,
+				FileName:   fileName,
+				Checksum:   cs,
+				Executable: path,
+			}
+		}
+
+		if ok, _, _ := procProcess32Next.Call(hProcessSnap, uintptr(unsafe.Pointer(&process))); ok == 0 {
+			break
+		}
+	}
+
+	if result == nil {
+		return nil, errors.New(fmt.Sprintf("could not find process with process id %d", processID))
+	}
+
+	result.Children = children
+	result.Modules, err = getModules(result.ProcessID)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // Get executable path for a ProcessID in string format
-func (t *target) getProcessPath(processID uint32) (string, error) {
+func getProcessPath(processID int64) (string, error) {
 	// Create a module snap handler with TH32CS_SNAPMODULE (0x00000008) for given process ID
 	hModuleSnap, _, _ := procCreateToolhelp32Snapshot.Call(0x00000008, uintptr(processID))
-	defer procCloseHandle.Call(hModuleSnap)
+
+	// Close handler after method is ready
+	defer func() {
+		_, _, _ = procCloseHandle.Call(hModuleSnap)
+	}()
 
 	var module moduleEntry
 	module.Size = uint32(unsafe.Sizeof(module))
@@ -184,4 +322,57 @@ func (t *target) getProcessPath(processID uint32) (string, error) {
 	}
 
 	return path, nil
+}
+
+// Get name of executable from path
+func getExecutableName(path string) string {
+	return path[strings.LastIndex(path, "/")+1:]
+}
+
+func getModules(processID int64) ([]Module, error) {
+	result := make([]Module, 0)
+
+	// Create a module snap handler with TH32CS_SNAPMODULE (0x00000008) for given process ID
+	hModuleSnap, _, _ := procCreateToolhelp32Snapshot.Call(0x00000008, uintptr(processID))
+
+	// Close handler after method is ready
+	defer func() {
+		_, _, _ = procCloseHandle.Call(hModuleSnap)
+	}()
+
+	var module moduleEntry
+	module.Size = uint32(unsafe.Sizeof(module))
+
+	// Get the first module, as it is the link to the executable. Other modules(DLLs) are irrelevant
+	if ok, _, _ := procModule32First.Call(hModuleSnap, uintptr(unsafe.Pointer(&module))); ok == 0 {
+		return result, errors.New("could not read module for process")
+	}
+
+	for {
+		if ok, _, _ := procModule32Next.Call(hModuleSnap, uintptr(unsafe.Pointer(&module))); ok == 0 {
+			break
+		}
+
+		end := 0
+		for {
+			if module.ExePath[end] == 0 {
+				break
+			}
+
+			end++
+		}
+
+		path := syscall.UTF16ToString(module.ExePath[:end])
+		cs, _ := checksum(path)
+
+		result = append(result, Module{
+			ProcessID:  int64(module.ProcessID),
+			ParentID:   processID,
+			FileName:   getExecutableName(path),
+			Checksum:   cs,
+			Executable: path,
+		})
+	}
+
+	return result, nil
 }

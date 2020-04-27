@@ -52,12 +52,24 @@ func (t *target) Processes() ([]Process, error) {
 		}
 
 		result = append(result, Process{
-			Pid:        pid,
-			FileName:   path[strings.LastIndex(path, "/")+1:],
+			ProcessID:  pid,
+			Parent:     0,
+			Children:   nil,
+			Modules:    nil,
+			FileName:   getExecutableName(path),
 			Checksum:   cs,
 			Executable: path,
 		})
 	}
 
 	return result, nil
+}
+
+func (t *target) ActiveProcess() (*Process, error) {
+	return &Process{}, nil
+}
+
+// Get name of executable from path
+func getExecutableName(path string) string {
+	return path[strings.LastIndex(path, "/")+1:]
 }

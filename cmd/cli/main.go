@@ -22,24 +22,18 @@ func main() {
 		}
 	}()
 
-	start := time.Now()
+	for {
+		start := time.Now()
 
-	sys := system.New()
+		sys := system.New()
 
-	processes, err := sys.Processes()
-	if err != nil {
-		log.Fatal().Err(err).Msg("could not get list of processes")
-	}
+		process, err := sys.ActiveProcess()
+		if err != nil {
+			log.Fatal().Err(err).Msg("")
+		}
 
-	log.Debug().Str("duration", time.Now().Sub(start).String()).Msg("duration for processing processes")
+		log.Debug().Str("duration", time.Now().Sub(start).String()).Int64("pid", process.ProcessID).Ints64("children", process.Children).Str("checksum", process.Checksum).Str("name", process.FileName).Msg("")
 
-	for _, process := range processes {
-		log.Debug().
-			Int64("pid", process.Pid).
-			Int64("ppid", process.Ppid).
-			Ints64("modules", process.ModulePid).
-			Str("executable", process.FileName).
-			Str("checksum", process.Checksum).
-			Msg("")
+		time.Sleep(time.Second * 2)
 	}
 }
