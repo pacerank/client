@@ -263,7 +263,6 @@ func getProcess(processID uint32) (result *Process, err error) {
 				ProcessID:  int64(process.ProcessID),
 				Parent:     int64(process.ParentProcessID),
 				Children:   nil,
-				Modules:    nil,
 				FileName:   fileName,
 				Checksum:   cs,
 				Executable: path,
@@ -280,10 +279,6 @@ func getProcess(processID uint32) (result *Process, err error) {
 	}
 
 	result.Children = children
-	result.Modules, err = getModules(result.ProcessID)
-	if err != nil {
-		return nil, err
-	}
 
 	return result, nil
 }
@@ -329,7 +324,8 @@ func getExecutableName(path string) string {
 	return path[strings.LastIndex(path, "/")+1:]
 }
 
-func getModules(processID int64) ([]Module, error) {
+// Get modules for a process
+func Modules(processID int64) ([]Module, error) {
 	result := make([]Module, 0)
 
 	// Create a module snap handler with TH32CS_SNAPMODULE (0x00000008) for given process ID

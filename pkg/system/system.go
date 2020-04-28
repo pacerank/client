@@ -16,7 +16,6 @@ type Process struct {
 	ProcessID  int64
 	Parent     int64
 	Children   []int64
-	Modules    []Module
 	FileName   string
 	Checksum   string
 	Executable string
