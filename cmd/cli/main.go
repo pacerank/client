@@ -29,7 +29,9 @@ func main() {
 
 		process, err := sys.ActiveProcess()
 		if err != nil {
-			log.Fatal().Err(err).Msg("")
+			log.Debug().Err(err).Msg("could not find active process")
+			time.Sleep(time.Second * 2)
+			continue
 		}
 
 		log.Debug().Str("duration", time.Now().Sub(start).String()).Int64("pid", process.ProcessID).Ints64("children", process.Children).Str("checksum", process.Checksum).Str("name", process.FileName).Msg("")

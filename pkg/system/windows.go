@@ -74,8 +74,8 @@ type moduleEntry struct {
 	ExePath      [MaxPath]uint16
 }
 
-func (t *target) Processes() ([]Process, error) {
-	var result = make([]Process, 0)
+func (t *target) Processes() ([]*Process, error) {
+	var result = make([]*Process, 0)
 
 	// Create a process snap handler, with TH32CS_SNAPPROCESS (0x00000002)
 	hProcessSnap, _, _ := procCreateToolhelp32Snapshot.Call(0x00000002, 0)
