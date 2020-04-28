@@ -31,6 +31,17 @@ const (
 	MaxPath         = 260
 )
 
+type (
+	DWORD     uint32
+	WPARAM    uintptr
+	LPARAM    uintptr
+	LRESULT   uintptr
+	HANDLE    uintptr
+	HINSTANCE HANDLE
+	HHOOK     HANDLE
+	HWND      HANDLE
+)
+
 // processEntry is the Windows API structure that contains a process's information.
 // https://docs.microsoft.com/en-us/windows/win32/api/tlhelp32/ns-tlhelp32-processentry32w
 type processEntry struct {
@@ -309,53 +320,4 @@ func getProcessPath(processID int64) (string, error) {
 // Get name of executable from path
 func getExecutableName(path string) string {
 	return path[strings.LastIndex(path, "/")+1:]
-}
-
-// Get modules for a process
-func Modules(processID int64) ([]Module, error) {
-	result := make([]Module, 0)
-
-	// Create a module snap handler with TH32CS_SNAPMODULE (0x00000008) for given process ID
-	hModuleSnap, _, _ := procCreateToolhelp32Snapshot.Call(0x00000008, uintptr(processID))
-
-	// Close handler after method is ready
-	defer func() {
-		_, _, _ = procCloseHandle.Call(hModuleSnap)
-	}()
-
-	var module moduleEntry
-	module.Size = uint32(unsafe.Sizeof(module))
-
-	// Get the first module, as it is the link to the executable. Other modules(DLLs) are irrelevant
-	if ok, _, _ := procModule32First.Call(hModuleSnap, uintptr(unsafe.Pointer(&module))); ok == 0 {
-		return result, errors.New("could not read module for process")
-	}
-
-	for {
-		if ok, _, _ := procModule32Next.Call(hModuleSnap, uintptr(unsafe.Pointer(&module))); ok == 0 {
-			break
-		}
-
-		end := 0
-		for {
-			if module.ExePath[end] == 0 {
-				break
-			}
-
-			end++
-		}
-
-		path := syscall.UTF16ToString(module.ExePath[:end])
-		cs, _ := checksum(path)
-
-		result = append(result, Module{
-			ProcessID:  int64(module.ProcessID),
-			ParentID:   processID,
-			FileName:   getExecutableName(path),
-			Checksum:   cs,
-			Executable: path,
-		})
-	}
-
-	return result, nil
 }

@@ -3,7 +3,6 @@ package system
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"os"
 )
@@ -20,27 +19,6 @@ type Process struct {
 	FileName   string
 	Checksum   string
 	Executable string
-}
-
-type Module struct {
-	ProcessID  int64
-	ParentID   int64
-	Checksum   string
-	Executable string
-	FileName   string
-}
-
-type systemError struct {
-	Err     error
-	Message string
-}
-
-func (se systemError) Error() string {
-	return fmt.Sprintf("%s: %s", se.Message, se.Err)
-}
-
-func (se systemError) Unwrap() error {
-	return se.Err
 }
 
 func New() System {
