@@ -12,19 +12,6 @@ import (
 
 type target struct{}
 
-type WindowsError struct {
-	Err     error
-	Message string
-}
-
-func (we WindowsError) Error() string {
-	return fmt.Sprintf("%s: %s", we.Message, we.Err.Error())
-}
-
-func (we WindowsError) Unwrap() error {
-	return we.Err
-}
-
 // Windows API functions
 var (
 	modKernel32                  = syscall.NewLazyDLL("kernel32.dll")
@@ -160,7 +147,7 @@ func (t *target) Processes() ([]*Process, error) {
 			continue
 		}
 
-		result = append(result, Process{
+		result = append(result, &Process{
 			ProcessID:  int64(process.ProcessID),
 			Parent:     int64(process.ParentProcessID),
 			Checksum:   cs,

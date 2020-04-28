@@ -3,12 +3,13 @@ package system
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"os"
 )
 
 type System interface {
-	Processes() ([]Process, error)
+	Processes() ([]*Process, error)
 	ActiveProcess() (*Process, error)
 }
 
@@ -27,6 +28,19 @@ type Module struct {
 	Checksum   string
 	Executable string
 	FileName   string
+}
+
+type systemError struct {
+	Err     error
+	Message string
+}
+
+func (se systemError) Error() string {
+	return fmt.Sprintf("%s: %s", se.Message, se.Err)
+}
+
+func (se systemError) Unwrap() error {
+	return se.Err
 }
 
 func New() System {

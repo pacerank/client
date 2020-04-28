@@ -15,19 +15,6 @@ import (
 
 type target struct{}
 
-type LinuxError struct {
-	Err     error
-	Message string
-}
-
-func (le LinuxError) Error() string {
-	return fmt.Sprintf("%s: %s", le.Message, le.Err)
-}
-
-func (le LinuxError) Unwrap() error {
-	return le.Err
-}
-
 func (t *target) Processes() ([]*Process, error) {
 	var result = make([]*Process, 0)
 
