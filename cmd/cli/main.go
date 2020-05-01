@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/pacerank/client/internal/operation"
-	"github.com/pacerank/client/pkg/system"
+	"github.com/pacerank/client/pkg/keyboard"
 	"github.com/rs/zerolog/log"
 	"time"
 )
@@ -22,20 +22,11 @@ func main() {
 		}
 	}()
 
+	go keyboard.Listen(func(key keyboard.KeyEvent) {
+		log.Info().Int16("key", int16(key.Key)).Err(err).Msgf("rune %q", key.Rune)
+	})
+
 	for {
-		start := time.Now()
-
-		sys := system.New()
-
-		process, err := sys.ActiveProcess()
-		if err != nil {
-			log.Debug().Err(err).Msg("could not find active process")
-			time.Sleep(time.Second * 2)
-			continue
-		}
-
-		log.Debug().Str("duration", time.Now().Sub(start).String()).Int64("pid", process.ProcessID).Ints64("children", process.Children).Str("checksum", process.Checksum).Str("name", process.FileName).Msg("")
-
-		time.Sleep(time.Second * 2)
+		time.Sleep(time.Second)
 	}
 }

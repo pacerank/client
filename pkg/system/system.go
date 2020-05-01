@@ -10,6 +10,7 @@ import (
 type System interface {
 	Processes() ([]*Process, error)
 	ActiveProcess() (*Process, error)
+	ListenKeyboard(chan byte)
 }
 
 type Process struct {
