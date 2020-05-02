@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/pacerank/client/internal/operation"
 	"github.com/pacerank/client/pkg/keyboard"
+	"github.com/pacerank/client/pkg/system"
 	"github.com/rs/zerolog/log"
 	"time"
 )
@@ -22,8 +23,15 @@ func main() {
 		}
 	}()
 
+	sys := system.New()
 	go keyboard.Listen(func(key keyboard.KeyEvent) {
-		log.Info().Int16("key", int16(key.Key)).Err(err).Msgf("rune %q", key.Rune)
+		process, err := sys.ActiveProcess()
+		if err != nil {
+			log.Error().Err(err).Msgf("could not get active process")
+			return
+		}
+
+		log.Info().Msgf("process active: %s", process.Executable)
 	})
 
 	for {

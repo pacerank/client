@@ -40,4 +40,5 @@ type (
 	HINSTANCE HANDLE
 	HHOOK     HANDLE
 	HWND      HANDLE
+	BYTE      int64
 )

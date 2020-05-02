@@ -5,6 +5,7 @@ package system
 import (
 	"errors"
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"syscall"
 	"unsafe"
 )
@@ -37,7 +38,7 @@ type moduleEntry struct {
 	ProcessID    DWORD
 	GlblcntUsage DWORD
 	ProccntUsage DWORD
-	ModBaseAddr  byte
+	ModBaseAddr  BYTE
 	ModBaseSize  DWORD
 	Module       HANDLE
 	ModuleName   [MaxModuleName32 + 1]uint16
@@ -214,6 +215,7 @@ func getProcess(processID DWORD) (result *Process, err error) {
 
 			path, err := getProcessPath(int64(process.ProcessID))
 			if err != nil {
+				log.Error().Err(err).Msg("could not get process path")
 				if ok, _, _ := procProcess32Next.Call(hProcessSnap, uintptr(unsafe.Pointer(&process))); ok == 0 {
 					break
 				}
@@ -223,6 +225,7 @@ func getProcess(processID DWORD) (result *Process, err error) {
 
 			cs, err := checksum(path)
 			if err != nil {
+				log.Error().Err(err).Msg("could not get checksum of executable")
 				if ok, _, _ := procProcess32Next.Call(hProcessSnap, uintptr(unsafe.Pointer(&process))); ok == 0 {
 					break
 				}
@@ -268,8 +271,8 @@ func getProcessPath(processID int64) (string, error) {
 	module.Size = DWORD(unsafe.Sizeof(module))
 
 	// Get the first module, as it is the link to the executable. Other modules(DLLs) are irrelevant
-	if ok, _, _ := procModule32First.Call(hModuleSnap, uintptr(unsafe.Pointer(&module))); ok == 0 {
-		return "", errors.New("could not read module for process")
+	if ok, _, err := procModule32First.Call(hModuleSnap, uintptr(unsafe.Pointer(&module))); ok == 0 {
+		return "", err
 	}
 
 	end := 0
