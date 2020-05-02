@@ -6,7 +6,9 @@ import (
 	"syscall"
 )
 
-type target struct{}
+type target struct {
+	processes []*Process
+}
 
 // kernel32.dll API calls
 var (

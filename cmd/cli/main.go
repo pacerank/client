@@ -24,6 +24,7 @@ func main() {
 	}()
 
 	sys := system.New()
+
 	go keyboard.Listen(func(key keyboard.KeyEvent) {
 		process, err := sys.ActiveProcess()
 		if err != nil {

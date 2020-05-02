@@ -160,11 +160,18 @@ func (t *target) ActiveProcess() (*Process, error) {
 		return nil, errors.New("process id could not be found for window handle")
 	}
 
+	for _, process := range t.processes {
+		if process.ProcessID == int64(processID) {
+			return process, nil
+		}
+	}
+
 	process, err := getProcess(processID)
 	if err != nil {
 		return nil, err
 	}
 
+	t.processes = append(t.processes, process)
 	return process, nil
 }
 
