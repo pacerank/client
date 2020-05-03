@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/pacerank/client/internal/operation"
-	"github.com/pacerank/client/pkg/keyboard"
+	"github.com/pacerank/client/internal/watcher"
 	"github.com/pacerank/client/pkg/system"
 	"github.com/rs/zerolog/log"
 	"time"
@@ -24,8 +24,7 @@ func main() {
 	}()
 
 	sys := system.New()
-
-	go keyboard.Listen(func(key keyboard.KeyEvent) {
+	go watcher.Keyboard(func(key watcher.KeyEvent) {
 		process, err := sys.ActiveProcess()
 		if err != nil {
 			log.Error().Err(err).Msgf("could not get active process")
@@ -33,6 +32,15 @@ func main() {
 		}
 
 		log.Info().Msgf("process active: %s", process.Executable)
+	})
+
+	go watcher.Code("Z:\\home\\kansuler\\workspace", func(event watcher.CodeEvent) {
+		if event.Err != nil {
+			log.Error().Err(event.Err).Msg("could not watch code")
+			return
+		}
+
+		log.Info().Str("language", event.Language).Str("filepath", event.FilePath).Str("filename", event.FileName).Msg("code watched")
 	})
 
 	for {
