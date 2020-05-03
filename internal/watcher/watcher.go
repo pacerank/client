@@ -3,6 +3,7 @@ package watcher
 import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"github.com/pacerank/client/internal/inspect"
 	"github.com/pacerank/client/pkg/system"
 	notify "github.com/radovskyb/watcher"
 	"github.com/rs/zerolog/log"
@@ -27,14 +28,7 @@ var ignoreDirectories = []string{
 	"node_modules",
 	".git",
 	".idea",
-}
-
-var ignoreExtensions = []string{
-	".exe",
-	".log",
-	".sum",
-	"package-lock.json",
-	".gitignore",
+	".terraform",
 }
 
 func Code(directory string, c CodeCallback) {
@@ -67,10 +61,6 @@ func Code(directory string, c CodeCallback) {
 					break
 				}
 
-				if ignoreExtension(event.Name) {
-					break
-				}
-
 				info, err := os.Stat(event.Name)
 				if err != nil {
 					c(CodeEvent{Err: err})
@@ -82,25 +72,39 @@ func Code(directory string, c CodeCallback) {
 						break
 					}
 
+					lang, err := inspect.AnalyzeFile(event.Name, info.Name())
+					if err != nil {
+						log.Debug().Err(err).Msg("could not analyze file")
+						break
+					}
+
 					c(CodeEvent{
 						FilePath: event.Name,
-						FileName: "",
-						Language: "",
+						FileName: info.Name(),
+						Language: lang,
 						GitRepo:  "",
-						Err:      nil,
+						Err:      err,
 					})
 					break
 				}
 
 				if info.IsDir() {
-					// TODO: Add fsnotify if create folder
 					if event.Op == fsnotify.Create {
+						if err := fs.Add(event.Name); err != nil {
+							c(CodeEvent{Err: err})
+							break
+						}
 
+						log.Debug().Str("path", event.Name).Msg("folder is watched by fsnotify")
 					}
 
-					// TODO: Add remove if remove folder
 					if event.Op == fsnotify.Remove {
+						if err := fs.Remove(event.Name); err != nil {
+							c(CodeEvent{Err: err})
+							break
+						}
 
+						log.Debug().Str("path", event.Name).Msg("folder removed from watch fsnotify")
 					}
 				}
 			case err, ok := <-fs.Errors:
@@ -117,38 +121,35 @@ func Code(directory string, c CodeCallback) {
 		for {
 			select {
 			case event := <-w.Event:
-				if ignoreExtension(event.Name()) {
-					break
-				}
-
 				if event.Op == notify.Write {
 					if event.IsDir() {
+						break
+					}
+
+					lang, err := inspect.AnalyzeFile(event.Path, event.Name())
+					if err != nil {
+						log.Debug().Err(err).Msg("could not analyze file")
 						break
 					}
 
 					c(CodeEvent{
 						FilePath: event.Path,
 						FileName: event.Name(),
-						Language: "",
+						Language: lang,
 						GitRepo:  "",
-						Err:      nil,
+						Err:      err,
 					})
 				}
 
 				if event.IsDir() {
-					// TODO: Add folder to watch
-					if event.Op == notify.Create {
-						err = w.Add(event.Path)
-						if err != nil {
-							c(CodeEvent{Err: err})
-						}
-					}
-
-					// Todo: Add remove if remove folder
-					if event.Op == notify.Remove {
-						err = w.Remove(event.Path)
-						if err != nil {
-							c(CodeEvent{Err: err})
+					if event.Op == notify.Create || event.Op == notify.Write {
+						for _, d := range watchList(event.Path) {
+							err = w.Add(d)
+							if err != nil {
+								c(CodeEvent{Err: err})
+								break
+							}
+							log.Debug().Str("path", event.Path).Msg("folder is watched by file system polling")
 						}
 					}
 				}
@@ -179,7 +180,7 @@ func Code(directory string, c CodeCallback) {
 	}
 
 	// Start the watching process - it'll check for changes every 100ms.
-	if err := w.Start(time.Second * 15); err != nil {
+	if err := w.Start(time.Second * 5); err != nil {
 		c(CodeEvent{Err: err})
 		return
 	}
@@ -220,16 +221,6 @@ func watchList(folder string) []string {
 func ignoreDirectory(path string) bool {
 	for _, ignore := range ignoreDirectories {
 		if strings.Contains(filepath.ToSlash(filepath.FromSlash(path)), filepath.ToSlash(filepath.FromSlash(ignore))) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func ignoreExtension(filename string) bool {
-	for _, ignore := range ignoreExtensions {
-		if strings.Contains(filename, ignore) {
 			return true
 		}
 	}
