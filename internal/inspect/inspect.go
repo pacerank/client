@@ -59,6 +59,10 @@ func IsIgnored(path, filename string) bool {
 		return true
 	}
 
+	if filename[len(filename):] == "~" {
+		return true
+	}
+
 	return false
 }
 

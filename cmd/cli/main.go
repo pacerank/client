@@ -34,7 +34,7 @@ func main() {
 		log.Info().Msgf("process active: %s", process.Executable)
 	})
 
-	go watcher.Code("Z:\\home\\kansuler\\workspace", func(event watcher.CodeEvent) {
+	go watcher.Code("/home/kansuler/workspace", func(event watcher.CodeEvent) {
 		if event.Err != nil {
 			log.Error().Err(event.Err).Msg("could not watch code")
 			return

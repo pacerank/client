@@ -63,7 +63,7 @@ func Code(directory string, c CodeCallback) {
 
 				info, err := os.Stat(event.Name)
 				if err != nil {
-					c(CodeEvent{Err: err})
+					log.Debug().Err(err).Msg("couldn't get file information")
 					break
 				}
 
@@ -74,7 +74,6 @@ func Code(directory string, c CodeCallback) {
 
 					lang, err := inspect.AnalyzeFile(event.Name, info.Name())
 					if err != nil {
-						log.Debug().Err(err).Msg("could not analyze file")
 						break
 					}
 
@@ -246,6 +245,7 @@ func Keyboard(c KeyboardCallback) {
 
 	for {
 		key := <-channel
+
 		c(KeyEvent{
 			Key:  Key(key),
 			Rune: rune(key),
