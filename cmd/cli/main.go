@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/pacerank/client/internal/operation"
+	"github.com/pacerank/client/internal/store"
 	"github.com/pacerank/client/internal/watcher"
 	"github.com/pacerank/client/pkg/system"
 	"github.com/rs/zerolog/log"
@@ -22,6 +23,14 @@ func main() {
 			log.Fatal().Err(err).Msg("could not terminate application gracefully")
 		}
 	}()
+
+	storage, err := store.New()
+	if err != nil {
+		log.Error().Err(err).Msgf("could start store")
+		return
+	}
+
+	defer storage.Close()
 
 	sys := system.New()
 	go watcher.Keyboard(func(key watcher.KeyEvent) {

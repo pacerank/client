@@ -3,6 +3,7 @@
 package system
 
 import (
+	"os"
 	"syscall"
 )
 
@@ -44,3 +45,7 @@ type (
 	HWND      HANDLE
 	BYTE      int64
 )
+
+func HomePath() string {
+	return os.Getenv("USERPROFILE")
+}
