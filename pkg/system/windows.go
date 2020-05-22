@@ -3,7 +3,7 @@
 package system
 
 import (
-	"os"
+	"os/exec"
 	"syscall"
 )
 
@@ -46,6 +46,6 @@ type (
 	BYTE      int64
 )
 
-func HomePath() string {
-	return os.Getenv("USERPROFILE")
+func OpenBrowser(url string) error {
+	return exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
 }

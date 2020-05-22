@@ -3,12 +3,11 @@
 package system
 
 import (
-	"os/user"
+	"os/exec"
 )
 
 type target struct{}
 
-func HomePath() string {
-	usr, _ := user.Current()
-	return usr.HomeDir
+func OpenBrowser(url string) error {
+	return exec.Command("xdg-open", url).Start()
 }

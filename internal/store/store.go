@@ -2,8 +2,8 @@ package store
 
 import (
 	"github.com/boltdb/bolt"
-	"github.com/pacerank/client/pkg/system"
 	"os"
+	"os/user"
 	"path"
 )
 
@@ -12,9 +12,14 @@ type Store struct {
 }
 
 func New() (*Store, error) {
-	_, err := os.Stat(path.Join(system.HomePath(), ".pacerank"))
+	usr, err := user.Current()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = os.Stat(path.Join(usr.HomeDir, ".pacerank"))
 	if os.IsNotExist(err) {
-		err = os.Mkdir(path.Join(system.HomePath(), ".pacerank"), os.ModePerm)
+		err = os.Mkdir(path.Join(usr.HomeDir, ".pacerank"), os.ModePerm)
 		if err != nil {
 			return nil, err
 		}
@@ -24,7 +29,7 @@ func New() (*Store, error) {
 		return nil, err
 	}
 
-	db, err := bolt.Open(path.Join(system.HomePath(), ".pacerank", "cache"), 0600, nil)
+	db, err := bolt.Open(path.Join(usr.HomeDir, ".pacerank", "cache"), 0600, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -33,5 +38,5 @@ func New() (*Store, error) {
 }
 
 func (s *Store) Close() {
-	s.db.Close()
+	_ = s.db.Close()
 }

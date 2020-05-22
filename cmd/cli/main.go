@@ -4,6 +4,7 @@ import (
 	"github.com/pacerank/client/internal/operation"
 	"github.com/pacerank/client/internal/store"
 	"github.com/pacerank/client/internal/watcher"
+	"github.com/pacerank/client/pkg/api"
 	"github.com/pacerank/client/pkg/system"
 	"github.com/rs/zerolog/log"
 	"time"
@@ -24,6 +25,8 @@ func main() {
 		}
 	}()
 
+	apiClient := api.New("https://digest.development.pacerank.io")
+
 	storage, err := store.New()
 	if err != nil {
 		log.Error().Err(err).Msgf("could start store")
@@ -31,6 +34,20 @@ func main() {
 	}
 
 	defer storage.Close()
+
+	token := storage.AuthorizationToken()
+	for token == "" {
+		log.Info().Msg("api key does not exist, initialize authorization flow")
+		err = operation.AuthorizationFlow(apiClient, storage)
+		if err != nil {
+			log.Error().Err(err).Msg("could not complete authorization flow")
+			return
+		}
+
+		token = storage.AuthorizationToken()
+	}
+
+	apiClient.AddAuthorizationToken(token)
 
 	sys := system.New()
 	go watcher.Keyboard(func(key watcher.KeyEvent) {
