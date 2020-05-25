@@ -15,6 +15,8 @@ type Api struct {
 	client          *http.Client
 }
 
+// This is the default reply structure in all requests
+// against the digest service
 type DefaultReplyStructure struct {
 	CorrelationId string          `json:"correlation_id"`
 	Status        int             `json:"status"`

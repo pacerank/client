@@ -54,7 +54,13 @@ func Setup() error {
 	// Pretty log
 	log.Logger = log.Output(mw)
 
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
 	return err
+}
+
+func EnableDebug() {
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 }
 
 func Close() error {

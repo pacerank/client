@@ -9,6 +9,8 @@ github.com/go-enry/go-enry/v2 v2.4.0 h1:0DX8PMead4HfsDrA7Ol72Fxvm2ZjKJ3YMUdRGpA2
 github.com/go-enry/go-enry/v2 v2.4.0/go.mod h1:bRyVIyqbkXtIKLqi8fLqgg7m1bMvXYBUVNEnG79JsR0=
 github.com/go-enry/go-oniguruma v1.2.0 h1:oBO9XC1IDT9+AoWW5oFsa/7gFeOPacEqDbyXZKWXuDs=
 github.com/go-enry/go-oniguruma v1.2.0/go.mod h1:bWDhYP+S6xZQgiRL7wlTScFYBe023B6ilRZbCAD5Hf4=
+github.com/jessevdk/go-flags v1.4.0 h1:4IU2WS7AumrZ/40jfhf4QVDMsQwqA7VEHozFRrGARJA=
+github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
