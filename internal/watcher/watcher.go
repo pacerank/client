@@ -15,10 +15,13 @@ import (
 )
 
 type CodeEvent struct {
+	Id       string
 	FilePath string
 	FileName string
+	Project  string
 	Language string
-	GitRepo  string
+	Git      string
+	Branch   string
 	Err      error
 }
 
@@ -77,11 +80,19 @@ func Code(directory string, c CodeCallback) {
 						break
 					}
 
+					pi, err := inspect.Project(event.Name, directory)
+					if err != nil {
+						log.Debug().Err(err).Msg("could not get repository information")
+					}
+
 					c(CodeEvent{
+						Id:       pi.Id,
 						FilePath: event.Name,
 						FileName: info.Name(),
 						Language: lang,
-						GitRepo:  "",
+						Project:  pi.Project,
+						Git:      pi.Git,
+						Branch:   pi.Branch,
 						Err:      err,
 					})
 					break
@@ -131,11 +142,19 @@ func Code(directory string, c CodeCallback) {
 						break
 					}
 
+					pi, err := inspect.Project(event.Path, directory)
+					if err != nil {
+						log.Debug().Err(err).Msg("could not get repository information")
+					}
+
 					c(CodeEvent{
+						Id:       pi.Id,
 						FilePath: event.Path,
 						FileName: event.Name(),
 						Language: lang,
-						GitRepo:  "",
+						Project:  pi.Project,
+						Git:      pi.Git,
+						Branch:   pi.Branch,
 						Err:      err,
 					})
 				}

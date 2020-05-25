@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/jessevdk/go-flags"
+	"github.com/pacerank/client/internal/inspect"
 	"github.com/pacerank/client/internal/operation"
 	"github.com/pacerank/client/internal/store"
 	"github.com/pacerank/client/internal/watcher"
@@ -11,6 +12,7 @@ import (
 	"time"
 )
 
+// Possible flags
 type Options struct {
 	Verbose bool     `short:"v" long:"verbose" description:"Show verbose debug information"`
 	Folders []string `short:"f" long:"folders" description:"Folders to watch for file changes"`
@@ -67,6 +69,9 @@ func main() {
 
 	log.Info().Msgf("Hello %s", storage.UserSignatureName())
 
+	// Setup a new session and meta
+	err = storage.NewSession()
+
 	apiClient.AddAuthorizationToken(token)
 
 	sys := system.New()
@@ -77,7 +82,18 @@ func main() {
 			return
 		}
 
-		log.Debug().Msgf("process active: %s", process.Executable)
+		editor, ok := inspect.Editor(process.Executable)
+		if !ok {
+			return
+		}
+
+		err = storage.UpdateTypingActivity(editor)
+		if err != nil {
+			log.Error().Err(err).Msg("could not record typing activity to store")
+			return
+		}
+
+		log.Debug().Msgf("recorded typing activity in %s", process.FileName)
 	})
 
 	for _, folder := range opts.Folders {
@@ -87,9 +103,35 @@ func main() {
 				return
 			}
 
-			log.Debug().Str("language", event.Language).Str("filepath", event.FilePath).Str("filename", event.FileName).Msg("code watched")
+			err = storage.AddHeap(store.Beat{
+				Id:       event.Id,
+				Language: event.Language,
+				Branch:   event.Branch,
+				FileName: event.FileName,
+				Project:  event.Project,
+				Git:      event.Git,
+			})
+			if err != nil {
+				log.Error().Err(err).Msg("could not save code activity to store")
+			}
+
+			log.Debug().
+				Str("language", event.Language).
+				Str("filepath", event.FilePath).
+				Str("filename", event.FileName).
+				Str("project", event.Project).
+				Str("branch", event.Branch).
+				Str("git", event.Git).
+				Str("id", event.Id).
+				Msg("code change found")
 		})
 	}
+
+	// Poll store to see if anything should be queued for dispatch to digest service
+	go watcher.Heaps(storage)
+
+	// Poll store to see if any messages are in queue, and send them
+	go watcher.Queue(storage, apiClient)
 
 	for {
 		time.Sleep(time.Second)
