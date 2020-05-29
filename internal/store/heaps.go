@@ -32,7 +32,7 @@ func (s *Store) Heaps() ([]string, error) {
 	return result, err
 }
 
-type Beat struct {
+type InHeap struct {
 	Id       string
 	Language string
 	Branch   string
@@ -41,42 +41,42 @@ type Beat struct {
 	Git      string
 }
 
-func (s *Store) AddHeap(beat Beat) error {
+func (s *Store) AddHeap(heap InHeap) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("heaps"))
 		if err != nil {
 			return err
 		}
 
-		pb := b.Bucket([]byte(beat.Id))
+		pb := b.Bucket([]byte(heap.Id))
 		if pb == nil {
-			pb, err = b.CreateBucketIfNotExists([]byte(beat.Id))
+			pb, err = b.CreateBucketIfNotExists([]byte(heap.Id))
 			if err != nil {
 				return err
 			}
 		}
 
-		err = pb.Put([]byte("languages"), appendToBytes(pb.Get([]byte("languages")), beat.Language))
+		err = pb.Put([]byte("languages"), appendToBytes(pb.Get([]byte("languages")), heap.Language))
 		if err != nil {
 			return err
 		}
 
-		err = pb.Put([]byte("files"), appendToBytes(pb.Get([]byte("files")), beat.FileName))
+		err = pb.Put([]byte("files"), appendToBytes(pb.Get([]byte("files")), heap.FileName))
 		if err != nil {
 			return err
 		}
 
-		err = pb.Put([]byte("project"), []byte(beat.Project))
+		err = pb.Put([]byte("project"), []byte(heap.Project))
 		if err != nil {
 			return err
 		}
 
-		err = pb.Put([]byte("git"), []byte(beat.Git))
+		err = pb.Put([]byte("git"), []byte(heap.Git))
 		if err != nil {
 			return err
 		}
 
-		err = pb.Put([]byte("branch"), []byte(beat.Branch))
+		err = pb.Put([]byte("branch"), []byte(heap.Branch))
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func (s *Store) AddHeap(beat Beat) error {
 	})
 }
 
-type Heap struct {
+type OutHeap struct {
 	Id        string
 	Languages []string
 	Files     []string
@@ -94,9 +94,9 @@ type Heap struct {
 	Branch    string
 }
 
-func (s *Store) HeapByProjectId(id string) (Heap, error) {
+func (s *Store) HeapByProjectId(id string) (OutHeap, error) {
 	var (
-		heap Heap
+		heap OutHeap
 		err  error
 	)
 

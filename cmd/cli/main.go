@@ -87,7 +87,7 @@ func main() {
 			return
 		}
 
-		err = storage.UpdateTypingActivity(editor)
+		err = storage.MetaTypingActivity(editor)
 		if err != nil {
 			log.Error().Err(err).Msg("could not record typing activity to store")
 			return
@@ -103,7 +103,7 @@ func main() {
 				return
 			}
 
-			err = storage.AddHeap(store.Beat{
+			err = storage.AddHeap(store.InHeap{
 				Id:       event.Id,
 				Language: event.Language,
 				Branch:   event.Branch,
@@ -128,7 +128,7 @@ func main() {
 	}
 
 	// Poll store to see if anything should be queued for dispatch to digest service
-	go watcher.Heaps(storage)
+	go watcher.Sessions(storage)
 
 	// Poll store to see if any messages are in queue, and send them
 	go watcher.Queue(storage, apiClient)
