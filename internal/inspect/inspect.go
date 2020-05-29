@@ -41,7 +41,7 @@ func AnalyzeFile(path string, filename string) (string, error) {
 		return "", errors.New("matches file ignore pattern, skip")
 	}
 
-	lang := enry.GetLanguage(filename, b)
+	lang := strings.ToLower(enry.GetLanguage(filename, b))
 
 	if lang == "Text" {
 		return lang, errors.New("file is text, skip")

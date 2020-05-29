@@ -107,7 +107,7 @@ func main() {
 				Id:       event.Id,
 				Language: event.Language,
 				Branch:   event.Branch,
-				FileName: event.FileName,
+				FileName: event.FilePath,
 				Project:  event.Project,
 				Git:      event.Git,
 			})

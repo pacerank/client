@@ -15,6 +15,7 @@ type ProjectInfo struct {
 	Git      string
 	Branch   string
 	FileName string
+	FilePath string
 }
 
 func Project(filePath, watcherPath string) (ProjectInfo, error) {
@@ -23,6 +24,7 @@ func Project(filePath, watcherPath string) (ProjectInfo, error) {
 		err error
 	)
 
+	originalFilePath := filePath
 	filePath = filepath.ToSlash(filePath)
 
 	var gitFound bool
@@ -35,6 +37,7 @@ func Project(filePath, watcherPath string) (ProjectInfo, error) {
 		if gitFound {
 			pi.Project = filePath[strings.LastIndex(filePath, string(os.PathSeparator))+1:]
 			pi.Id = base64.StdEncoding.EncodeToString([]byte(filePath))
+			pi.FilePath = strings.Replace(originalFilePath, filePath, "", 1)
 			break
 		}
 

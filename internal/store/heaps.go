@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/boltdb/bolt"
 )
 
@@ -94,7 +95,7 @@ type OutHeap struct {
 	Branch    string
 }
 
-func (s *Store) HeapByProjectId(id string) (OutHeap, error) {
+func (s *Store) HeapById(id string) (OutHeap, error) {
 	var (
 		heap OutHeap
 		err  error
@@ -110,7 +111,7 @@ func (s *Store) HeapByProjectId(id string) (OutHeap, error) {
 
 		pb := b.Bucket([]byte(id))
 		if pb == nil {
-			return errors.New("heap with project id does not exist")
+			return errors.New(fmt.Sprintf("heap with id %s does not exist", id))
 		}
 
 		heap.Project = string(pb.Get([]byte("project")))
@@ -127,9 +128,19 @@ func (s *Store) HeapByProjectId(id string) (OutHeap, error) {
 	return heap, err
 }
 
-func (s *Store) ClearHeaps() error {
+func (s *Store) DeleteHeap(id string) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
-		return tx.DeleteBucket([]byte("heaps"))
+		b := tx.Bucket([]byte("heaps"))
+		if b == nil {
+			return errors.New("heaps has not been initiated")
+		}
+
+		pb := b.Bucket([]byte(id))
+		if pb == nil {
+			return errors.New(fmt.Sprintf("heap with id %s does not exist", id))
+		}
+
+		return b.DeleteBucket([]byte(id))
 	})
 }
 

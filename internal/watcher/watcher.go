@@ -87,7 +87,7 @@ func Code(directory string, c CodeCallback) {
 
 					c(CodeEvent{
 						Id:       pi.Id,
-						FilePath: event.Name,
+						FilePath: pi.FilePath,
 						FileName: info.Name(),
 						Language: lang,
 						Project:  pi.Project,
@@ -149,7 +149,7 @@ func Code(directory string, c CodeCallback) {
 
 					c(CodeEvent{
 						Id:       pi.Id,
-						FilePath: event.Path,
+						FilePath: pi.FilePath,
 						FileName: event.Name(),
 						Language: lang,
 						Project:  pi.Project,

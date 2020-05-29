@@ -8,7 +8,9 @@ import (
 )
 
 type Store struct {
-	db *bolt.DB
+	db          *bolt.DB
+	queueRecord []byte
+	id          []byte
 }
 
 func New() (*Store, error) {

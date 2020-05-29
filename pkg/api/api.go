@@ -22,6 +22,7 @@ type DefaultReplyStructure struct {
 	Status        int             `json:"status"`
 	Service       string          `json:"service"`
 	Content       json.RawMessage `json:"content"`
+	Error         string          `json:"error"`
 }
 
 type addHeaderTransport struct {
