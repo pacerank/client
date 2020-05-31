@@ -22,13 +22,6 @@ func Sessions(storage *store.Store) {
 			continue
 		}
 
-		heaps, err := storage.Heaps()
-		if err != nil {
-			log.Error().Err(err).Msg("couldn't get any heaps")
-		}
-
-		log.Debug().Interface("meta", meta).Strs("heaps", heaps).Msg("did a check on meta and heaps")
-
 		// Send heap to queue if the last activity surpass x minutes and hasn't been sent already.
 		if time.Now().Add(-time.Minute*3).After(meta.LastActivity) && !meta.HeapAddedToQueue {
 			heaps, err := storage.Heaps()
