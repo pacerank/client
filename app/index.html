@@ -1,0 +1,73 @@
+<html window-icon="rice://app/original_icon_large.png">
+<head>
+    <script type="text/tiscript">
+        $(#login).on("click", function() {
+            view.login();
+        });
+    </script>
+    <style rel="stylesheet" type="text/css">
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        .pacerank-body {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(-90deg, #F6F5FF 25%, #FFFFFF 100%);
+        }
+
+        .header {
+            padding: 10px 0;
+            width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .header .logo {
+            height: 50px;
+        }
+
+        .login {
+            padding: 10px 0;
+            width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .button {
+            margin-top: 20px;
+            background: linear-gradient(-0deg, #2F67F5 25%, #6716CE 100%);
+            padding: 10px;
+            width: 80%;
+            color: #FFFFFF;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: #4579ef;
+        }
+
+        [hidden] { display:none !important; }
+    </style>
+</head>
+<body class="pacerank-body">
+<div id="testBox"></div>
+<div class="header">
+    <img src="rice://app/original_large.png" class="logo" />
+</div>
+<div class="login">
+    <div class="welcome">
+        Welcome to PaceRank, login to start measure your activity.
+    </div>
+    <button class="button" id="login">
+        Login
+    </button>
+</div>
+</body>
+</html>

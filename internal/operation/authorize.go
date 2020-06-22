@@ -66,6 +66,13 @@ func AuthorizationFlow(apiClient *api.Api, storage *store.Store) error {
 		}
 
 		defaultReply, endpointReply, err := apiClient.ConfirmAuthorizationFlow(id)
+		if err != nil {
+			return authorizeError{
+				Message: fmt.Sprintf("unexpected error from confirm authorization flow: %s", err),
+				Err:     err,
+			}
+		}
+
 		if defaultReply.Status != http.StatusOK {
 			return authorizeError{
 				Message: fmt.Sprintf("unexpected status code from api: %d", defaultReply.Status),

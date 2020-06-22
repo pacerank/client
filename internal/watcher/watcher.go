@@ -198,7 +198,7 @@ func Code(directory string, c CodeCallback) {
 	}
 
 	// Start the watching process - it'll check for changes every 100ms.
-	if err := w.Start(time.Second * 15); err != nil {
+	if err := w.Start(time.Second * 5); err != nil {
 		c(CodeEvent{Err: err})
 		return
 	}

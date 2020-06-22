@@ -1,22 +1,16 @@
 package main
 
 import (
-	"github.com/jessevdk/go-flags"
-	"github.com/pacerank/client/internal/inspect"
+	tool "github.com/GeertJohan/go.rice"
+	"github.com/getlantern/systray"
+	"github.com/pacerank/client/internal/gui"
 	"github.com/pacerank/client/internal/operation"
 	"github.com/pacerank/client/internal/store"
 	"github.com/pacerank/client/internal/watcher"
 	"github.com/pacerank/client/pkg/api"
-	"github.com/pacerank/client/pkg/system"
 	"github.com/rs/zerolog/log"
-	"time"
+	"os"
 )
-
-// Possible flags
-type Options struct {
-	Verbose bool     `short:"v" long:"verbose" description:"Show verbose debug information"`
-	Folders []string `short:"f" long:"folders" description:"Folders to watch for file changes"`
-}
 
 func main() {
 	// Operational setup
@@ -33,18 +27,14 @@ func main() {
 		}
 	}()
 
-	var opts Options
-	_, err = flags.Parse(&opts)
+	systray.Run(onReady, onExit)
+}
+
+func onReady() {
+	box, err := tool.FindBox("../../app")
 	if err != nil {
+		log.Error().Err(err).Msg("could not find resources")
 		return
-	}
-
-	if opts.Verbose {
-		operation.EnableDebug()
-	}
-
-	if len(opts.Folders) == 0 {
-		log.Fatal().Msg("must give at least one folder to watch")
 	}
 
 	apiClient := api.New("https://digest.development.pacerank.io")
@@ -56,48 +46,9 @@ func main() {
 
 	defer storage.Close()
 
-	token := storage.AuthorizationToken()
-	for token == "" {
-		log.Info().Msg("api key does not exist, initialize authorization flow")
-		err = operation.AuthorizationFlow(apiClient, storage)
-		if err != nil {
-			log.Fatal().Err(err).Msg("could not complete authorization flow")
-		}
-
-		token = storage.AuthorizationToken()
-	}
-
-	log.Info().Msgf("Hello %s", storage.UserSignatureName())
-
-	// Setup a new session and meta
-	err = storage.NewSession()
-
-	apiClient.AddAuthorizationToken(token)
-
-	sys := system.New()
-	go watcher.Keyboard(func(key watcher.KeyEvent) {
-		process, err := sys.ActiveProcess()
-		if err != nil {
-			log.Error().Err(err).Msgf("could not get active process")
-			return
-		}
-
-		editor, ok := inspect.Editor(process.Executable)
-		if !ok {
-			return
-		}
-
-		err = storage.MetaTypingActivity(editor)
-		if err != nil {
-			log.Error().Err(err).Msg("could not record typing activity to store")
-			return
-		}
-
-		log.Debug().Msgf("recorded typing activity in %s", process.FileName)
-	})
-
-	for _, folder := range opts.Folders {
-		go watcher.Code(folder, func(event watcher.CodeEvent) {
+	directories, err := storage.Directories()
+	for _, directory := range directories {
+		go watcher.Code(directory.Directory, func(event watcher.CodeEvent) {
 			if event.Err != nil {
 				log.Error().Err(event.Err).Msg("could not watch code")
 				return
@@ -140,7 +91,28 @@ func main() {
 		log.Info().Msgf("digest has acknowledged the message: %s", structure.CorrelationId)
 	})
 
+	systray.SetIcon(box.MustBytes("original_icon_large.ico"))
+	systray.SetTitle("PaceRank")
+	systray.SetTooltip("Currently collecting your programming measurements")
+	start := systray.AddMenuItem("Show", "Show the app")
+	quit := systray.AddMenuItem("Quit", "Quit the app")
+
 	for {
-		time.Sleep(time.Second)
+		select {
+		case <-start.ClickedCh:
+			win := gui.Start(storage, apiClient)
+			if win == nil {
+				return
+			}
+
+			win.Show()
+			win.Run()
+		case <-quit.ClickedCh:
+			os.Exit(0)
+		}
 	}
+}
+
+func onExit() {
+	os.Exit(0)
 }

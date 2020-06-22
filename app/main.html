@@ -1,0 +1,103 @@
+<html window-icon="rice://app/original_icon_large.png">
+<head>
+    <script type="text/tiscript">
+        $(#name).$append(<span>{view.user_signature_name()}</span>)
+        $(#add-directory).on("click", function() {
+            var d = view.selectFolder();
+            view.add_directory(d);
+        });
+        var directories = view.directories();
+        for(var directory in directories)
+            $(#directories).append(`<div class="directory-wrap"><div class="cross" directory="` + directory + `">X</div><span class="directory cut">` + directory + `</span></div>`)
+
+        $(.cross).on("click", function(evt, self) {
+            view.delete_directory(this.attributes["directory"]);
+        });
+    </script>
+    <style rel="stylesheet" type="text/css">
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        .pacerank-body {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(-90deg, #F6F5FF 25%, #FFFFFF 100%);
+        }
+
+        .header {
+            padding: 10px 0;
+            width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .header .logo {
+            height: 50px;
+        }
+
+        .content {
+            padding: 10px 0;
+            width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .button {
+            margin-top: 20px;
+            background: linear-gradient(-0deg, #2F67F5 25%, #6716CE 100%);
+            padding: 10px;
+            width: 80%;
+            color: #FFFFFF;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: #4579ef;
+        }
+
+        .directories {
+            margin-top: 10px;
+            width: calc(100% - 40px);
+            padding: 0 20px;
+        }
+
+        .directory-wrap {
+            position: relative;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .cross {
+            color: red;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        [hidden] { display:none !important; }
+    </style>
+</head>
+<body class="pacerank-body">
+<div id="testBox"></div>
+<div class="header">
+    <img src="rice://app/original_large.png" class="logo" />
+</div>
+<div class="content">
+    <div id="name">
+        Hello,
+    </div>
+    <button class="button" id="add-directory">
+        Add Directory
+    </button>
+    <div id="directories" class="directories"></div>
+</div>
+</body>
+</html>
