@@ -27,14 +27,15 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 		log.Fatal().Err(err).Msg("create window error")
 	}
 
-	win.SetTitle("PaceRank")
-
 	// Add handler for rice
 	rice.HandleDataLoad(win.Sciter)
-	_, err = tool.FindBox("../../app")
+	_, err = tool.FindBox("resources")
 	if err != nil {
-		log.Fatal().Err(err).Msgf("could not load appBox")
+		log.Error().Err(err).Msg("could not load resources box")
+		return nil
 	}
+
+	win.SetTitle("PaceRank")
 
 	// Get user signature name
 	win.DefineFunction("user_signature_name", func(args ...*sciter.Value) *sciter.Value {
@@ -43,7 +44,7 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 
 	// Login user
 	win.DefineFunction("login", func(args ...*sciter.Value) *sciter.Value {
-		err = win.LoadFile("rice://app/loggingIn.html")
+		err = win.LoadFile("rice://resources/loggingIn.html")
 		if err != nil {
 			log.Error().Err(err).Msgf("could not load loggingIn.html")
 			return nil
@@ -52,7 +53,7 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 		go func() {
 			err = operation.AuthorizationFlow(apiClient, storage)
 			if err != nil {
-				err = win.LoadFile("rice://app/index.html")
+				err = win.LoadFile("rice://resources/index.html")
 				if err != nil {
 					log.Error().Err(err).Msgf("could not load index.html")
 				}
@@ -62,7 +63,7 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 			}
 
 			apiClient.AddAuthorizationToken(storage.AuthorizationToken())
-			err = win.LoadFile("rice://app/main.html")
+			err = win.LoadFile("rice://resources/main.html")
 			if err != nil {
 				log.Error().Err(err).Msgf("could not load main.html")
 			}
@@ -99,7 +100,7 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 			}
 		})
 
-		err = win.LoadFile("rice://app/main.html")
+		err = win.LoadFile("rice://resources/main.html")
 		if err != nil {
 			log.Error().Err(err).Msgf("could not load loggingIn.html")
 		}
@@ -113,7 +114,7 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 			log.Error().Err(err).Msgf("could not delete folder from storage")
 		}
 
-		err = win.LoadFile("rice://app/main.html")
+		err = win.LoadFile("rice://resources/main.html")
 		if err != nil {
 			log.Error().Err(err).Msgf("could not load loggingIn.html")
 		}
@@ -150,13 +151,13 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 	// Check if user is authenticated
 	if storage.AuthorizationToken() != "" {
 		// Load html
-		err = win.LoadFile("rice://app/main.html")
+		err = win.LoadFile("rice://resources/main.html")
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not load file")
 		}
 	} else {
 		// Load html
-		err = win.LoadFile("rice://app/index.html")
+		err = win.LoadFile("rice://resources/index.html")
 		if err != nil {
 			log.Fatal().Err(err).Msg("could not load file")
 		}

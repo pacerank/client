@@ -31,12 +31,6 @@ func main() {
 }
 
 func onReady() {
-	box, err := tool.FindBox("../../app")
-	if err != nil {
-		log.Error().Err(err).Msg("could not find resources")
-		return
-	}
-
 	apiClient := api.New("https://digest.development.pacerank.io")
 
 	storage, err := store.New()
@@ -66,7 +60,7 @@ func onReady() {
 				log.Error().Err(err).Msg("could not save code activity to store")
 			}
 
-			log.Debug().
+			log.Info().
 				Str("language", event.Language).
 				Str("filepath", event.FilePath).
 				Str("filename", event.FileName).
@@ -74,7 +68,7 @@ func onReady() {
 				Str("branch", event.Branch).
 				Str("git", event.Git).
 				Str("id", event.Id).
-				Msg("code change found")
+				Msg("found code change")
 		})
 	}
 
@@ -90,6 +84,12 @@ func onReady() {
 
 		log.Info().Msgf("digest has acknowledged the message: %s", structure.CorrelationId)
 	})
+
+	box, err := tool.FindBox("resources")
+	if err != nil {
+		log.Error().Err(err).Msg("could not find resources")
+		return
+	}
 
 	systray.SetIcon(box.MustBytes("original_icon_large.ico"))
 	systray.SetTitle("PaceRank")

@@ -6,6 +6,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"io"
 	"os"
+	"os/user"
+	"path"
 	"runtime"
 	"time"
 )
@@ -28,8 +30,25 @@ func Setup() error {
 
 	var err error
 
+	usr, err := user.Current()
+	if err != nil {
+		return err
+	}
+
+	_, err = os.Stat(path.Join(usr.HomeDir, ".pacerank"))
+	if os.IsNotExist(err) {
+		err = os.Mkdir(path.Join(usr.HomeDir, ".pacerank"), os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
 	// Try to open file after setup to get correct logging structure
-	file, err = os.OpenFile(fmt.Sprintf("%s_client.log", time.Now().Format("2006-01-02")), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	file, err = os.OpenFile(fmt.Sprintf("%s/.pacerank/%s_client.log", usr.HomeDir, time.Now().Format("2006-01-02")), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}
