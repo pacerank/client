@@ -1,13 +1,17 @@
+//go:generate goversioninfo -icon=resources/original_icon_large.ico -manifest=resources/pacerank.exe.manifest -64
+
 package main
 
 import (
 	tool "github.com/GeertJohan/go.rice"
 	"github.com/getlantern/systray"
 	"github.com/pacerank/client/internal/gui"
+	"github.com/pacerank/client/internal/inspect"
 	"github.com/pacerank/client/internal/operation"
 	"github.com/pacerank/client/internal/store"
 	"github.com/pacerank/client/internal/watcher"
 	"github.com/pacerank/client/pkg/api"
+	"github.com/pacerank/client/pkg/system"
 	"github.com/rs/zerolog/log"
 	"os"
 )
@@ -85,6 +89,29 @@ func onReady() {
 		log.Info().Msgf("digest has acknowledged the message: %s", structure.CorrelationId)
 	})
 
+	// Start recording typing
+	sys := system.New()
+	go watcher.Keyboard(func(key watcher.KeyEvent) {
+		process, err := sys.ActiveProcess()
+		if err != nil {
+			log.Error().Err(err).Msgf("could not get active process")
+			return
+		}
+
+		editor, ok := inspect.Editor(process.Executable)
+		if !ok {
+			return
+		}
+
+		err = storage.MetaTypingActivity(editor)
+		if err != nil {
+			log.Error().Err(err).Msg("could not record typing activity to store")
+			return
+		}
+
+		log.Debug().Msgf("recorded typing activity in %s", process.FileName)
+	})
+
 	box, err := tool.FindBox("resources")
 	if err != nil {
 		log.Error().Err(err).Msg("could not find resources")
@@ -108,6 +135,7 @@ func onReady() {
 			win.Show()
 			win.Run()
 		case <-quit.ClickedCh:
+			systray.Quit()
 			os.Exit(0)
 		}
 	}

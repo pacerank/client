@@ -14,10 +14,6 @@ func Queue(storage *store.Store, apiClient *api.Api, callback func(structure *ap
 	for {
 		time.Sleep(time.Second * 5)
 		err := storage.NextInQueue(func(b []byte) error {
-			if b == nil {
-				return nil
-			}
-
 			result, _, err := apiClient.SendRecord(b)
 			if err != nil {
 				return err

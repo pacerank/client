@@ -115,7 +115,7 @@ func Sessions(storage *store.Store) {
 				log.Error().Err(err).Msg("could not start a new session")
 			}
 
-			log.Debug().Msg("30 minutes has passed, clear session")
+			log.Info().Msg("30 minutes has passed, clear session")
 		}
 	}
 }
