@@ -89,6 +89,9 @@ func onReady() {
 		log.Info().Msgf("digest has acknowledged the message: %s", structure.CorrelationId)
 	})
 
+	// Setup a new session and meta
+	err = storage.NewSession()
+
 	// Start recording typing
 	sys := system.New()
 	go watcher.Keyboard(func(key watcher.KeyEvent) {
