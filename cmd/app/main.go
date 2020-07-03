@@ -35,7 +35,7 @@ func main() {
 }
 
 func onReady() {
-	apiClient := api.New("https://digest.development.pacerank.io")
+	apiClient := api.New("https://digest.pacerank.io")
 
 	storage, err := store.New()
 	if err != nil {
@@ -43,6 +43,10 @@ func onReady() {
 	}
 
 	defer storage.Close()
+
+	if storage.AuthorizationToken() != "" {
+		apiClient.AddAuthorizationToken(storage.AuthorizationToken())
+	}
 
 	directories, err := storage.Directories()
 	for _, directory := range directories {

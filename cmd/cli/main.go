@@ -47,7 +47,7 @@ func main() {
 		log.Fatal().Msg("must give at least one folder to watch")
 	}
 
-	apiClient := api.New("https://digest.development.pacerank.io")
+	apiClient := api.New("https://digest.pacerank.io")
 
 	storage, err := store.New()
 	if err != nil {
