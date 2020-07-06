@@ -23,6 +23,8 @@ func main() {
 		log.Fatal().Err(err).Msg("could not setup application")
 	}
 
+	operation.EnableDebug()
+
 	// Gracefully shutdown application on termination
 	defer func() {
 		err = operation.Close()
@@ -48,40 +50,50 @@ func onReady() {
 		apiClient.AddAuthorizationToken(storage.AuthorizationToken())
 	}
 
-	directories, err := storage.Directories()
-	for _, directory := range directories {
-		go watcher.Code(directory.Directory, func(event watcher.CodeEvent) {
-			if event.Err != nil {
-				log.Error().Err(event.Err).Msg("could not watch code")
-				return
-			}
-
-			err = storage.AddHeap(store.InHeap{
-				Id:       event.Id,
-				Language: event.Language,
-				Branch:   event.Branch,
-				FileName: event.FilePath,
-				Project:  event.Project,
-				Git:      event.Git,
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("could not save code activity to store")
-			}
-
-			log.Info().
-				Str("language", event.Language).
-				Str("filepath", event.FilePath).
-				Str("filename", event.FileName).
-				Str("project", event.Project).
-				Str("branch", event.Branch).
-				Str("git", event.Git).
-				Str("id", event.Id).
-				Msg("found code change")
-		})
-	}
-
 	// Poll store to see if anything should be queued for dispatch to digest service
 	go watcher.Sessions(storage)
+
+	go func() {
+		for {
+			directory := <-storage.NotifyListenToDirectory
+			log.Info().Str("directory", directory).Msg("")
+			go watcher.Code(directory, func(event watcher.CodeEvent) {
+				if event.Err != nil {
+					log.Error().Err(event.Err).Msg("could not watch code")
+					return
+				}
+
+				err = storage.AddHeap(store.InHeap{
+					Id:       event.Id,
+					Language: event.Language,
+					Branch:   event.Branch,
+					FileName: event.FilePath,
+					Project:  event.Project,
+					Git:      event.Git,
+				})
+				if err != nil {
+					log.Error().Err(err).Msg("could not save code activity to store")
+				}
+
+				log.Info().
+					Str("language", event.Language).
+					Str("filepath", event.FilePath).
+					Str("filename", event.FileName).
+					Str("project", event.Project).
+					Str("branch", event.Branch).
+					Str("git", event.Git).
+					Str("id", event.Id).
+					Msg("found code change")
+			})
+		}
+	}()
+
+	// Setup watchers for currently saved directories
+	err = storage.NotifyCurrentDirectories()
+	if err != nil {
+		log.Error().Err(err).Msg("couldn't notify about current directories")
+		return
+	}
 
 	// Poll store to see if any messages are in queue, and send them
 	go watcher.Queue(storage, apiClient, func(structure *api.DefaultReplyStructure, err error) {

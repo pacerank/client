@@ -4,7 +4,6 @@ import (
 	tool "github.com/GeertJohan/go.rice"
 	"github.com/pacerank/client/internal/operation"
 	"github.com/pacerank/client/internal/store"
-	"github.com/pacerank/client/internal/watcher"
 	"github.com/pacerank/client/pkg/api"
 	"github.com/rs/zerolog/log"
 	"github.com/sciter-sdk/go-sciter"
@@ -92,25 +91,6 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 			log.Error().Err(err).Msgf("could not add folder to storage")
 			return nil
 		}
-
-		go watcher.Code(folder, func(event watcher.CodeEvent) {
-			if event.Err != nil {
-				log.Error().Err(event.Err).Msg("could not watch code")
-				return
-			}
-
-			err = storage.AddHeap(store.InHeap{
-				Id:       event.Id,
-				Language: event.Language,
-				Branch:   event.Branch,
-				FileName: event.FilePath,
-				Project:  event.Project,
-				Git:      event.Git,
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("could not save code activity to store")
-			}
-		})
 
 		err = win.LoadFile("rice://resources/main.html")
 		if err != nil {

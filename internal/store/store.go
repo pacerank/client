@@ -8,9 +8,10 @@ import (
 )
 
 type Store struct {
-	db          *bolt.DB
-	queueRecord []byte
-	id          []byte
+	db                      *bolt.DB
+	queueRecord             []byte
+	id                      []byte
+	NotifyListenToDirectory chan string
 }
 
 func New() (*Store, error) {
@@ -36,7 +37,10 @@ func New() (*Store, error) {
 		return nil, err
 	}
 
-	return &Store{db: db}, nil
+	return &Store{
+		db:                      db,
+		NotifyListenToDirectory: make(chan string),
+	}, nil
 }
 
 func (s *Store) Close() {

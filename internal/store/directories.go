@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"github.com/boltdb/bolt"
+	"github.com/rs/zerolog/log"
 )
 
 type Directory struct {
@@ -19,6 +20,8 @@ func (s *Store) AddDirectory(directory string) error {
 
 		id, _ := b.NextSequence()
 
+		// Notify directory
+		s.NotifyListenToDirectory <- directory
 		return b.Put(itob(id), []byte(directory))
 	})
 }
@@ -62,6 +65,26 @@ func (s *Store) DeleteDirectory(directory string) error {
 			if bytes.Compare(v, []byte(directory)) == 0 {
 				return b.Delete(k)
 			}
+		}
+
+		return nil
+	})
+}
+
+// Notify directory
+
+// Function will notify on channel all directories that exist already
+func (s *Store) NotifyCurrentDirectories() error {
+	return s.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("directories"))
+		if b == nil {
+			return nil
+		}
+		c := b.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			log.Info().Msgf("notify %s", string(v))
+			s.NotifyListenToDirectory <- string(v)
 		}
 
 		return nil
