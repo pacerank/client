@@ -44,6 +44,16 @@ func onReady() {
 
 	defer storage.Close()
 
+	if storage.AuthorizationToken() == "" {
+		win := gui.Start(storage, apiClient)
+		if win == nil {
+			return
+		}
+
+		win.Show()
+		win.Run()
+	}
+
 	if storage.AuthorizationToken() != "" {
 		apiClient.AddAuthorizationToken(storage.AuthorizationToken())
 	}
