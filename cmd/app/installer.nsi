@@ -49,7 +49,8 @@ Delete $INSTDIR\sciter.dll
 # delete shortcut
 Delete $SMPROGRAMS\PaceRank.lnk
 Delete $DESKTOP\PaceRank.lnk
-Delete "$APPDATA\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\PaceRank.lnk"
+Delete "$APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\PaceRank.lnk"
+Delete "$PROFILE\.pacerank"
 
 # Delete the directory
 RMDir $INSTDIR
