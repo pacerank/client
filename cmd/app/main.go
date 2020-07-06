@@ -44,16 +44,6 @@ func onReady() {
 
 	defer storage.Close()
 
-	if storage.AuthorizationToken() == "" {
-		win := gui.Start(storage, apiClient)
-		if win == nil {
-			return
-		}
-
-		win.Show()
-		win.Run()
-	}
-
 	if storage.AuthorizationToken() != "" {
 		apiClient.AddAuthorizationToken(storage.AuthorizationToken())
 	}
@@ -140,6 +130,16 @@ func onReady() {
 	systray.SetTooltip("PaceRank")
 	start := systray.AddMenuItem("Show", "Show the app")
 	quit := systray.AddMenuItem("Quit", "Quit the app")
+
+	if storage.AuthorizationToken() == "" {
+		win := gui.Start(storage, apiClient)
+		if win == nil {
+			return
+		}
+
+		win.Show()
+		win.Run()
+	}
 
 	for {
 		select {
