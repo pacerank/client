@@ -132,13 +132,11 @@ func (s *Store) Meta() (Meta, error) {
 		}
 
 		v = b.Get([]byte("first_activity"))
-		if v == nil {
-			return ErrNoActivity
-		}
-
-		result.FirstActivity, err = time.Parse(time.RFC3339, string(v))
-		if err != nil {
-			return err
+		if v != nil {
+			result.FirstActivity, err = time.Parse(time.RFC3339, string(v))
+			if err != nil {
+				return err
+			}
 		}
 
 		v = b.Get([]byte("last_activity"))
