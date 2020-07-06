@@ -81,6 +81,9 @@ func Editor(process string) (string, bool) {
 	case strings.Contains(process, "Unity.exe"):
 		result = "Unity"
 		break
+	case strings.Contains(process, "Brackets.exe"):
+		result = "Brackets"
+		break
 	}
 
 	return result, result != ""

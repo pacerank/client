@@ -60,6 +60,7 @@ func Code(directory string, c CodeCallback) {
 		for {
 			select {
 			case event, ok := <-fs.Events:
+				log.Debug().Bool("ok", ok).Str("name", event.Name).Str("op", event.Op.String()).Msg("")
 				if !ok {
 					break
 				}
@@ -77,6 +78,7 @@ func Code(directory string, c CodeCallback) {
 
 					lang, err := inspect.AnalyzeFile(event.Name, info.Name())
 					if err != nil {
+						log.Error().Err(err).Msg("could not inspect file")
 						break
 					}
 
@@ -99,6 +101,7 @@ func Code(directory string, c CodeCallback) {
 				}
 
 				if info.IsDir() {
+					log.Debug().Msg("event was on a directory")
 					if event.Op == fsnotify.Create {
 						if err := fs.Add(event.Name); err != nil {
 							c(CodeEvent{Err: err})

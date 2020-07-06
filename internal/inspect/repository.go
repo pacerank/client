@@ -25,10 +25,11 @@ func Project(filePath, watcherPath string) (ProjectInfo, error) {
 	)
 
 	originalFilePath := filePath
-	filePath = filepath.ToSlash(filePath)
+	watcherPath = filepath.FromSlash(watcherPath)
 
 	var gitFound bool
 
+	// loop up until git path is found
 	for {
 		if !gitFound {
 			pi.Git, pi.Branch, gitFound = gitInfo(filePath)
@@ -38,6 +39,7 @@ func Project(filePath, watcherPath string) (ProjectInfo, error) {
 			pi.Project = filePath[strings.LastIndex(filePath, string(os.PathSeparator))+1:]
 			pi.Id = base64.StdEncoding.EncodeToString([]byte(filePath))
 			pi.FilePath = strings.Replace(originalFilePath, filePath, "", 1)
+			pi.FileName = filepath.Base(originalFilePath)
 			break
 		}
 
@@ -46,6 +48,12 @@ func Project(filePath, watcherPath string) (ProjectInfo, error) {
 		}
 
 		filePath = filepath.Dir(filePath)
+	}
+
+	if !gitFound || pi.Id == "" {
+		pi.Id = "no_project"
+		pi.FilePath = filepath.Dir(originalFilePath)
+		pi.FileName = filepath.Base(originalFilePath)
 	}
 
 	return pi, err

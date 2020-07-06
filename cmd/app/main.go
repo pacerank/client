@@ -54,7 +54,7 @@ func onReady() {
 	go func() {
 		for {
 			directory := <-storage.NotifyListenToDirectory
-			log.Info().Str("directory", directory).Msg("")
+			log.Info().Str("directory", directory).Msg("add watcher to directory")
 			go watcher.Code(directory, func(event watcher.CodeEvent) {
 				if event.Err != nil {
 					log.Error().Err(event.Err).Msg("could not watch code")
