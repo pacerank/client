@@ -127,7 +127,7 @@ func onReady() {
 
 	systray.SetIcon(box.MustBytes("original_icon_large.ico"))
 	systray.SetTitle("PaceRank")
-	systray.SetTooltip("Currently collecting your programming measurements")
+	systray.SetTooltip("PaceRank")
 	start := systray.AddMenuItem("Show", "Show the app")
 	quit := systray.AddMenuItem("Quit", "Quit the app")
 

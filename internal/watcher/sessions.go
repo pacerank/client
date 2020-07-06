@@ -81,6 +81,13 @@ func Sessions(storage *store.Store) {
 					})
 				}
 
+				for _, editor := range meta.Editors {
+					record.Labels = append(record.Labels, model.Label{
+						Category: model.CategoryEditor,
+						Value:    editor,
+					})
+				}
+
 				b, err := json.Marshal(record)
 				if err != nil {
 					log.Error().Err(err).Msg("could not marshal record into byte array")

@@ -16,7 +16,7 @@ go run ./cmd/cli -f /path/to/watch -f /path/to/watch2
 First time you run this command it will open a browser to authorize the client to send statistics to your account in
 PaceRank.
 
-### Compile Windows
+## Compile Windows
 ```
 go generate
 go build -ldflags -H=windowsgui
