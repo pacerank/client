@@ -10,6 +10,7 @@ import (
 	"github.com/sciter-sdk/go-sciter"
 	"github.com/sciter-sdk/go-sciter/rice"
 	"github.com/sciter-sdk/go-sciter/window"
+	"net/url"
 	"runtime"
 	"strings"
 )
@@ -75,6 +76,17 @@ func Start(storage *store.Store, apiClient *api.Api) *window.Window {
 	// Add a directory
 	win.DefineFunction("add_directory", func(args ...*sciter.Value) *sciter.Value {
 		folder := strings.Replace(args[0].String(), "file://", "", -1)
+		if folder == "" {
+			log.Error().Err(err).Msg("no folder was selected")
+			return nil
+		}
+
+		folder, err := url.QueryUnescape(folder)
+		if err != nil {
+			log.Error().Err(err).Msg("could not decode folder path")
+			return nil
+		}
+
 		err = storage.AddDirectory(folder)
 		if err != nil {
 			log.Error().Err(err).Msgf("could not add folder to storage")
