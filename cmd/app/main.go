@@ -23,8 +23,6 @@ func main() {
 		log.Fatal().Err(err).Msg("could not setup application")
 	}
 
-	operation.EnableDebug()
-
 	// Gracefully shutdown application on termination
 	defer func() {
 		err = operation.Close()
